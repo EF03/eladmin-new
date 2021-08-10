@@ -19,9 +19,11 @@ import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import me.zhengjie.domain.vo.TradeVo;
 import me.zhengjie.domain.AlipayConfig;
+import me.zhengjie.domain.QAlipayConfig;
+import me.zhengjie.domain.vo.TradeVo;
 import me.zhengjie.exception.BadRequestException;
 import me.zhengjie.repository.AliPayRepository;
 import me.zhengjie.service.AliPayService;
@@ -30,6 +32,9 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.Optional;
 
 /**
@@ -42,6 +47,8 @@ import java.util.Optional;
 public class AliPayServiceImpl implements AliPayService {
 
     private final AliPayRepository alipayRepository;
+    @PersistenceContext
+    EntityManager entityManager;
 
     @Override
     @Cacheable(key = "'config'")
@@ -55,6 +62,9 @@ public class AliPayServiceImpl implements AliPayService {
     @Transactional(rollbackFor = Exception.class)
     public AlipayConfig config(AlipayConfig alipayConfig) {
         alipayConfig.setId(1L);
+
+        JPAQueryFactory query = new JPAQueryFactory(entityManager);
+        QAlipayConfig qStudent = QAlipayConfig.alipayConfig;
         return alipayRepository.save(alipayConfig);
     }
 

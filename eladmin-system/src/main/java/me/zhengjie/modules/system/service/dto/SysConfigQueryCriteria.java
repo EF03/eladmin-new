@@ -13,35 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package me.zhengjie.utils;
+package me.zhengjie.modules.system.service.dto;
+
+import lombok.Data;
+import me.zhengjie.annotation.Query;
 
 /**
- * 常用静态常量
- *
- * @author Zheng Jie
- * @date 2018-12-26
- */
-public class ElAdminConstant {
+ * @author ron
+ * @website https://el-admin.vip
+ * @date 2021-07-28
+ **/
+@Data
+public class SysConfigQueryCriteria {
 
-    /**
-     * 用于IP定位转换
-     */
-    public static final String REGION = "内网IP|内网IP";
-    /**
-     * win 系统
-     */
-    public static final String WIN = "win";
-
-    /**
-     * mac 系统
-     */
-    public static final String MAC = "mac";
-
-    /**
-     * 常用接口
-     */
-    public static class Url {
-        // IP归属地查询
-        public static final String IP_URL = "http://whois.pconline.com.cn/ipJson.jsp?ip=%s&json=true";
-    }
+    @Query(type = Query.Type.INNER_LIKE)
+    private String type;
 }

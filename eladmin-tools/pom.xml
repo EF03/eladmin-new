@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>eladmin-tools</artifactId>
-    <name>工具模块</name>
+    <name>工具模塊</name>
 
     <properties>
         <mail.version>1.4.7</mail.version>
@@ -45,6 +45,11 @@
             <groupId>com.alipay.sdk</groupId>
             <artifactId>alipay-sdk-java</artifactId>
             <version>${alipay.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+            <version>2.4.5</version>
         </dependency>
     </dependencies>
 </project>

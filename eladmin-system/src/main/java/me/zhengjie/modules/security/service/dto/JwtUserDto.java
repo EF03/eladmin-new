@@ -15,12 +15,13 @@
  */
 package me.zhengjie.modules.security.service.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import me.zhengjie.modules.system.service.dto.UserDto;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +38,8 @@ public class JwtUserDto implements UserDetails {
 
     private final List<Long> dataScopes;
 
-    @JSONField(serialize = false)
+    //    @JSONField(serialize = false)
+    @JsonIgnore
     private final List<GrantedAuthority> authorities;
 
     public Set<String> getRoles() {
@@ -45,37 +47,43 @@ public class JwtUserDto implements UserDetails {
     }
 
     @Override
-    @JSONField(serialize = false)
+//    @JSONField(serialize = false)
+    @JsonIgnore
     public String getPassword() {
         return user.getPassword();
     }
 
     @Override
-    @JSONField(serialize = false)
+//    @JSONField(serialize = false)
+    @JsonIgnore
     public String getUsername() {
         return user.getUsername();
     }
 
-    @JSONField(serialize = false)
+    //    @JSONField(serialize = false)
+    @JsonIgnore
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    @JSONField(serialize = false)
+//    @JSONField(serialize = false)
+    @JsonIgnore
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
-    @JSONField(serialize = false)
+//    @JSONField(serialize = false)
+@JsonIgnore
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
-    @JSONField(serialize = false)
+//    @JSONField(serialize = false)
+    @JsonIgnore
     public boolean isEnabled() {
         return user.getEnabled();
     }

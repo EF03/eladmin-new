@@ -16,7 +16,6 @@
 package me.zhengjie.config;
 
 import com.fasterxml.classmate.TypeResolver;
-import com.google.common.base.Predicates;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -34,8 +33,10 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static springfox.documentation.schema.AlternateTypeRules.newRule;
 
@@ -62,8 +63,9 @@ public class SwaggerConfig {
                 .pathMapping("/")
                 .apiInfo(apiInfo())
                 .select()
-                .paths(Predicates.not(PathSelectors.regex("/error.*")))
-                .paths(PathSelectors.any())
+                .paths(PathSelectors.regex("^((?!/error).)*$"))
+//                .paths(Predicates.not(PathSelectors.regex("/error.*")))
+//                .paths(PathSelectors.any())
                 .build()
                 //添加登陆认证
                 .securitySchemes(securitySchemes())

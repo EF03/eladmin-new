@@ -15,10 +15,11 @@
  */
 package me.zhengjie.modules.system.service.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import me.zhengjie.base.BaseDTO;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
@@ -55,12 +56,14 @@ public class UserDto extends BaseDTO implements Serializable {
 
     private String avatarPath;
 
-    @JSONField(serialize = false)
+    //    @JSONField(serialize = false)
+    @JsonIgnore
     private String password;
 
     private Boolean enabled;
 
-    @JSONField(serialize = false)
+    //    @JSONField(serialize = false)
+    @JsonIgnore
     private Boolean isAdmin = false;
 
     private Date pwdResetTime;

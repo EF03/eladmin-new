@@ -45,7 +45,8 @@ public class ${className}Dto implements Serializable {
     <#if column.columnKey = 'PRI'>
     <#if !auto && pkColumnType = 'Long'>
     /** 防止精度丢失 */
-    @JSONField(serializeUsing = ToStringSerializer.class)
+    //@JSONField(serializeUsing = ToStringSerializer.class)
+    @JsonSerialize(using = ToStringSerializer.class)
     </#if>
     </#if>
     private ${column.columnType} ${column.changeColumnName};

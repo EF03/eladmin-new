@@ -13,15 +13,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package me.zhengjie.repository;
+package me.zhengjie.modules.system.repository;
 
-import me.zhengjie.domain.EmailConfig;
+import me.zhengjie.modules.system.domain.SysConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import java.util.Optional;
 
 /**
- * @author Zheng Jie
- * @date 2018-12-26
- */
-public interface EmailRepository extends JpaRepository<EmailConfig,Long> , QuerydslPredicateExecutor<EmailConfig> {
+ * @author ron
+ * @website https://el-admin.vip
+ * @date 2021-07-28
+ **/
+public interface SysConfigRepository extends JpaRepository<SysConfig, Long>, JpaSpecificationExecutor<SysConfig> {
+
+    /**
+     * type 不重複需先去db確認
+     *
+     * @param type
+     * @return 是否
+     */
+    boolean existsByType(String type);
+
+
+    /**
+     * 搜尋 by type
+     *
+     * @param type
+     * @return SysConfig
+     */
+    Optional<SysConfig> findByType(String type);
 }

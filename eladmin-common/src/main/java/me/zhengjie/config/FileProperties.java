@@ -16,7 +16,7 @@
 package me.zhengjie.config;
 
 import lombok.Data;
-import me.zhengjie.utils.ElAdminConstant;
+import me.zhengjie.constants.ElAdminConstant;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 

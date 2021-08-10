@@ -50,7 +50,8 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class LogServiceImpl implements LogService {
-    private static final Logger log = LoggerFactory.getLogger(LogServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(LogServiceImpl.class);
+    private final static int SLOW_METHOD_TIME = 1000;
     private final LogRepository logRepository;
     private final LogErrorMapper logErrorMapper;
     private final LogSmallMapper logSmallMapper;
@@ -92,12 +93,18 @@ public class LogServiceImpl implements LogService {
             log.setDescription(aopLog.value());
         }
         assert log != null;
-        log.setRequestIp(ip);
 
+        String params = getParameter(method, joinPoint.getArgs());
+
+        if (log.getTime() > SLOW_METHOD_TIME) {
+            logger.error("{} - 費時 = {} 毫秒， param = {}", methodName, (log.getTime()), params);
+        }
+
+        log.setRequestIp(ip);
         log.setAddress(StringUtils.getCityInfo(log.getRequestIp()));
         log.setMethod(methodName);
         log.setUsername(username);
-        log.setParams(getParameter(method, joinPoint.getArgs()));
+        log.setParams(params);
         log.setBrowser(browser);
         logRepository.save(log);
     }
