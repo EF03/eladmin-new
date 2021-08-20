@@ -29,6 +29,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
+
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.*;
@@ -102,13 +103,15 @@ public class TokenProvider implements InitializingBean {
      */
     public void checkRenewal(String token) {
         // 判断是否续期token,计算token的过期时间
-        long time = redisUtils.getExpire(properties.getOnlineKey() + token) * 1000;
-        Date expireDate = DateUtil.offset(new Date(), DateField.MILLISECOND, (int) time);
-        // 判断当前时间与过期时间的时间差
-        long differ = expireDate.getTime() - System.currentTimeMillis();
+//        long time = redisUtils.getExpire(properties.getOnlineKey() + token) * 1000;
+//        Date expireDate = DateUtil.offset(new Date(), DateField.MILLISECOND, (int) time);
+//        // 判断当前时间与过期时间的时间差
+//        long differ = expireDate.getTime() - System.currentTimeMillis();
+        long differ = redisUtils.getRemainTime(properties.getOnlineKey() + token);
         // 如果在续期检查的范围内，则续期
         if (differ <= properties.getDetect()) {
-            long renew = time + properties.getRenew();
+//            long renew = time + properties.getRenew();
+            long renew = properties.getRenew();
             redisUtils.expire(properties.getOnlineKey() + token, renew, TimeUnit.MILLISECONDS);
         }
     }

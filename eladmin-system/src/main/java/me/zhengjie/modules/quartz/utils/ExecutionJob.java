@@ -75,7 +75,8 @@ public class ExecutionJob extends QuartzJobBean {
             long times = System.currentTimeMillis() - startTime;
             log.setTime(times);
             if(StringUtils.isNotBlank(uuid)) {
-                redisUtils.set(uuid, true);
+//                redisUtils.set(uuid, true);
+                redisUtils.setCacheObject(uuid, true);
             }
             // 任务状态
             log.setIsSuccess(true);
@@ -89,7 +90,8 @@ public class ExecutionJob extends QuartzJobBean {
             }
         } catch (Exception e) {
             if(StringUtils.isNotBlank(uuid)) {
-                redisUtils.set(uuid, false);
+//                redisUtils.set(uuid, false);
+                redisUtils.setCacheObject(uuid, true);
             }
             System.out.println("任务执行失败，任务名称：" + quartzJob.getJobName());
             System.out.println("--------------------------------------------------------------");

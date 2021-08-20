@@ -16,7 +16,7 @@
 package me.zhengjie.modules.system.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import me.zhengjie.config.FileProperties;
+import me.zhengjie.config.properties.FileProperties;
 import me.zhengjie.exception.BadRequestException;
 import me.zhengjie.modules.security.service.OnlineUserService;
 import me.zhengjie.modules.security.service.UserCacheClean;
@@ -116,9 +116,13 @@ public class UserServiceImpl implements UserService {
         }
         // 如果用户的角色改变
         if (!resources.getRoles().equals(user.getRoles())) {
-            redisUtils.del(CacheKey.DATA_USER + resources.getId());
-            redisUtils.del(CacheKey.MENU_USER + resources.getId());
-            redisUtils.del(CacheKey.ROLE_AUTH + resources.getId());
+//            redisUtils.del(CacheKey.DATA_USER + resources.getId());
+//            redisUtils.del(CacheKey.MENU_USER + resources.getId());
+//            redisUtils.del(CacheKey.ROLE_AUTH + resources.getId());
+
+            redisUtils.deleteObject(CacheKey.DATA_USER + resources.getId());
+            redisUtils.deleteObject(CacheKey.MENU_USER + resources.getId());
+            redisUtils.deleteObject(CacheKey.ROLE_AUTH + resources.getId());
         }
         // 如果用户被禁用，则清除用户登录信息
         if(!resources.getEnabled()){
@@ -242,7 +246,8 @@ public class UserServiceImpl implements UserService {
      * @param id /
      */
     public void delCaches(Long id, String username) {
-        redisUtils.del(CacheKey.USER_ID + id);
+//        redisUtils.del(CacheKey.USER_ID + id);
+        redisUtils.deleteObject(CacheKey.USER_ID + id);
         flushCache(username);
     }
 

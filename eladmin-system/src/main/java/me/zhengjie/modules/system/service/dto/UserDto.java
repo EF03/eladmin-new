@@ -18,6 +18,7 @@ package me.zhengjie.modules.system.service.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 import me.zhengjie.base.BaseDTO;
 
 import java.io.Serializable;
@@ -30,6 +31,7 @@ import java.util.Set;
  */
 @Getter
 @Setter
+@Jacksonized
 public class UserDto extends BaseDTO implements Serializable {
 
     private Long id;

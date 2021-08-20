@@ -210,6 +210,7 @@ public class RoleServiceImpl implements RoleService {
 
     /**
      * 清理缓存
+     *
      * @param id /
      */
     public void delCaches(Long id, List<User> users) {
@@ -217,10 +218,12 @@ public class RoleServiceImpl implements RoleService {
         if (CollectionUtil.isNotEmpty(users)) {
             users.forEach(item -> userCacheClean.cleanUserCache(item.getUsername()));
             Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+
             redisUtils.delByKeys(CacheKey.DATA_USER, userIds);
             redisUtils.delByKeys(CacheKey.MENU_USER, userIds);
             redisUtils.delByKeys(CacheKey.ROLE_AUTH, userIds);
         }
-        redisUtils.del(CacheKey.ROLE_ID + id);
+//        redisUtils.del(CacheKey.ROLE_ID + id);
+        redisUtils.deleteObject(CacheKey.ROLE_ID + id);
     }
 }

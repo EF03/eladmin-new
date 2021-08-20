@@ -13,6 +13,8 @@ server:
 
 
 spring:
+  cache:
+    type: redis
   freemarker:
     check-template-location: false
   profiles:
@@ -50,6 +52,20 @@ spring:
     password: ${REDIS_PWD:}
     #连接超时时间
     timeout: 5000
+--- # redisson 缓存配置
+redisson:
+  cacheGroup:
+    # 用例: @Cacheable(cacheNames="groupId", key="#XXX") 方可使用缓存组配置
+    - groupId: redissonCacheMap
+      # 组过期时间(脚本监控)
+      ttl: 60000
+      # 组最大空闲时间(脚本监控)
+      maxIdleTime: 60000
+      # 组最大长度
+      maxSize: 0
+    - groupId: testCache
+      ttl: 1000
+      maxIdleTime: 500
 
 task:
   pool:

@@ -15,14 +15,28 @@
  */
 package me.zhengjie.config;
 
+import cn.hutool.core.util.StrUtil;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.zhengjie.config.properties.RedissonProperties;
 import me.zhengjie.utils.JsonUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.codec.JsonJacksonCodec;
+import org.redisson.codec.TypedJsonJacksonCodec;
+import org.redisson.config.Config;
+import org.redisson.spring.cache.CacheConfig;
+import org.redisson.spring.cache.RedissonSpringCacheManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.CacheErrorHandler;
@@ -30,15 +44,18 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.*;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,58 +65,64 @@ import java.util.Map;
 @Slf4j
 @Configuration
 @EnableCaching
-@ConditionalOnClass(RedisOperations.class)
-@EnableConfigurationProperties(RedisProperties.class)
+@RequiredArgsConstructor
 public class RedisConfig extends CachingConfigurerSupport {
 
-    /**
-     *  设置 redis 数据默认过期时间，默认2小时
-     *  设置@cacheable 序列化方式
-     */
-    @Bean
-    public RedisCacheConfiguration redisCacheConfiguration(){
-//        FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
-        Jackson2JsonRedisSerializer jsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
-        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig();
-        configuration = configuration.serializeValuesWith(RedisSerializationContext.
-                SerializationPair.fromSerializer(jsonRedisSerializer)).entryTtl(Duration.ofHours(6));
-        return configuration;
+    private static final String REDIS_PROTOCOL_PREFIX = "redis://";
+    private static final String REDISS_PROTOCOL_PREFIX = "rediss://";
+
+    private final RedissonProperties redissonProperties;
+    private final RedisProperties redisProperties;
+
+
+    @Bean(destroyMethod = "shutdown")
+    @ConditionalOnMissingBean(RedissonClient.class)
+    public RedissonClient redisson() throws IOException {
+        String prefix = REDIS_PROTOCOL_PREFIX;
+        if (redisProperties.isSsl()) {
+            prefix = REDISS_PROTOCOL_PREFIX;
+        }
+        Config config = new Config();
+
+        config.setThreads(redissonProperties.getThreads())
+                .setNettyThreads(redissonProperties.getNettyThreads())
+                .setCodec(JsonJacksonCodec.INSTANCE)
+                .setTransportMode(redissonProperties.getTransportMode());
+
+        RedissonProperties.SingleServerConfig singleServerConfig = redissonProperties.getSingleServerConfig();
+        // 使用单机模式
+        config.useSingleServer()
+                .setAddress(prefix + redisProperties.getHost() + ":" + redisProperties.getPort())
+                .setConnectTimeout(((Long) redisProperties.getTimeout().toMillis()).intValue())
+                .setDatabase(redisProperties.getDatabase())
+                .setPassword(StrUtil.isNotBlank(redisProperties.getPassword()) ? redisProperties.getPassword() : null)
+                .setTimeout(singleServerConfig.getTimeout())
+                .setRetryAttempts(singleServerConfig.getRetryAttempts())
+                .setRetryInterval(singleServerConfig.getRetryInterval())
+                .setSubscriptionsPerConnection(singleServerConfig.getSubscriptionsPerConnection())
+                .setClientName(singleServerConfig.getClientName())
+                .setIdleConnectionTimeout(singleServerConfig.getIdleConnectionTimeout())
+                .setSubscriptionConnectionMinimumIdleSize(singleServerConfig.getSubscriptionConnectionMinimumIdleSize())
+                .setSubscriptionConnectionPoolSize(singleServerConfig.getSubscriptionConnectionPoolSize())
+                .setConnectionMinimumIdleSize(singleServerConfig.getConnectionMinimumIdleSize())
+                .setConnectionPoolSize(singleServerConfig.getConnectionPoolSize())
+                .setDnsMonitoringInterval(singleServerConfig.getDnsMonitoringInterval());
+        return Redisson.create(config);
     }
 
-    @SuppressWarnings("all")
-    @Bean(name = "redisTemplate")
-    @ConditionalOnMissingBean(name = "redisTemplate")
-    public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Object> template = new RedisTemplate<>();
-        //序列化
-//        FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
-        // value值的序列化采用fastJsonRedisSerializer
-//        template.setValueSerializer(fastJsonRedisSerializer);
-//        template.setHashValueSerializer(fastJsonRedisSerializer);
-        // 全局开启AutoType，这里方便开发，使用全局的方式
-//        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
-        // 建议使用这种方式，小范围指定白名单
-        // ParserConfig.getGlobalInstance().addAccept("me.zhengjie.domain");
-        // key的序列化采用StringRedisSerializer
-//        template.setKeySerializer(new StringRedisSerializer());
-//        template.setHashKeySerializer(new StringRedisSerializer());
-//        template.setConnectionFactory(redisConnectionFactory);
-
-
-//        GenericToStringSerializer keySerializer = new GenericToStringSerializer(String.class);
-        Jackson2JsonRedisSerializer keySerializer = new Jackson2JsonRedisSerializer(Object.class);
-        //key序列化方式
-        template.setKeySerializer(keySerializer);
-        //哈希key序列化方式
-        template.setHashKeySerializer(keySerializer); GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer();
-        //值序列化方式
-        template.setValueSerializer(valueSerializer);
-        //哈希值序列化方式
-        template.setHashValueSerializer(valueSerializer);
-        //连接器工厂
-        template.setConnectionFactory(redisConnectionFactory);
-
-        return template;
+    /**
+     * 整合spring-cache
+     */
+    @Bean
+    public CacheManager cacheManager(RedissonClient redissonClient) {
+        List<RedissonProperties.CacheGroup> cacheGroup = redissonProperties.getCacheGroup();
+        Map<String, CacheConfig> config = new HashMap<>(16);
+        for (RedissonProperties.CacheGroup group : cacheGroup) {
+            CacheConfig cacheConfig = new CacheConfig(group.getTtl(), group.getMaxIdleTime());
+            cacheConfig.setMaxSize(group.getMaxSize());
+            config.put(group.getGroupId(), cacheConfig);
+        }
+        return new RedissonSpringCacheManager(redissonClient, config, JsonJacksonCodec.INSTANCE);
     }
 
     /**
@@ -109,20 +132,19 @@ public class RedisConfig extends CachingConfigurerSupport {
     @Override
     public KeyGenerator keyGenerator() {
         return (target, method, params) -> {
-            Map<String,Object> container = new HashMap<>(3);
+            Map<String, Object> container = new HashMap<>(3);
             Class<?> targetClassClass = target.getClass();
             // 类地址
-            container.put("class",targetClassClass.toGenericString());
+            container.put("class", targetClassClass.toGenericString());
             // 方法名称
-            container.put("methodName",method.getName());
+            container.put("methodName", method.getName());
             // 包名称
-            container.put("package",targetClassClass.getPackage());
+            container.put("package", targetClassClass.getPackage());
             // 参数列表
             for (int i = 0; i < params.length; i++) {
-                container.put(String.valueOf(i),params[i]);
+                container.put(String.valueOf(i), params[i]);
             }
             // 转为JSON字符串
-//            String jsonString = JSON.toJSONString(container);
             String jsonString = JsonUtils.toJsonString(container);
             // 做SHA256 Hash计算，得到一个SHA256摘要作为Key
             return DigestUtils.sha256Hex(jsonString);
@@ -158,71 +180,3 @@ public class RedisConfig extends CachingConfigurerSupport {
     }
 
 }
-
-/**
- * Value 序列化
- *
- * @author /
- * @param <T>
- */
-// class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
-//
-//    private final Class<T> clazz;
-//
-//    FastJsonRedisSerializer(Class<T> clazz) {
-//        super();
-//        this.clazz = clazz;
-//    }
-//
-//    @Override
-//    public byte[] serialize(T t) {
-//        if (t == null) {
-//            return new byte[0];
-//        }
-//        return JSON.toJSONString(t, SerializerFeature.WriteClassName).getBytes(StandardCharsets.UTF_8);
-//    }
-//
-//    @Override
-//    public T deserialize(byte[] bytes) {
-//        if (bytes == null || bytes.length <= 0) {
-//            return null;
-//        }
-//        String str = new String(bytes, StandardCharsets.UTF_8);
-//        return JSON.parseObject(str, clazz);
-//    }
-//
-//}
-
-/**
- * 重写序列化器
- *
- * @author /
- */
-//class StringRedisSerializer implements RedisSerializer<Object> {
-//
-//    private final Charset charset;
-//
-//    StringRedisSerializer() {
-//        this(StandardCharsets.UTF_8);
-//    }
-//
-//    private StringRedisSerializer(Charset charset) {
-//        Assert.notNull(charset, "Charset must not be null!");
-//        this.charset = charset;
-//    }
-//
-//    @Override
-//    public String deserialize(byte[] bytes) {
-//        return (bytes == null ? null : new String(bytes, charset));
-//    }
-//
-//    @Override
-//    public byte[] serialize(Object object) {
-//        String string = JSON.toJSONString(object);
-//        if (StringUtils.isBlank(string)) {
-//            return null;
-//        }
-//        string = string.replace("\"", "");
-//        return string.getBytes(charset);
-//    }
-//}
