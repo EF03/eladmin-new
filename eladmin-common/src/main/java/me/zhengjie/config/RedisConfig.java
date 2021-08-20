@@ -26,6 +26,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.codec.JsonJacksonCodec;
+import org.redisson.codec.MarshallingCodec;
 import org.redisson.codec.TypedJsonJacksonCodec;
 import org.redisson.config.Config;
 import org.redisson.spring.cache.CacheConfig;
@@ -86,7 +87,7 @@ public class RedisConfig extends CachingConfigurerSupport {
 
         config.setThreads(redissonProperties.getThreads())
                 .setNettyThreads(redissonProperties.getNettyThreads())
-                .setCodec(JsonJacksonCodec.INSTANCE)
+                .setCodec(new MarshallingCodec())
                 .setTransportMode(redissonProperties.getTransportMode());
 
         RedissonProperties.SingleServerConfig singleServerConfig = redissonProperties.getSingleServerConfig();
@@ -122,7 +123,7 @@ public class RedisConfig extends CachingConfigurerSupport {
             cacheConfig.setMaxSize(group.getMaxSize());
             config.put(group.getGroupId(), cacheConfig);
         }
-        return new RedissonSpringCacheManager(redissonClient, config, JsonJacksonCodec.INSTANCE);
+        return new RedissonSpringCacheManager(redissonClient, config, new MarshallingCodec());
     }
 
     /**

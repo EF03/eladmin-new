@@ -11,6 +11,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.*;
 import java.io.IOException;
 
@@ -52,12 +53,15 @@ public class RemoveDruidAdConfig {
             public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
                 chain.doFilter(request, response);
                 // 重置缓冲区，响应头不会被重置
-                response.resetBuffer();
+//                response.resetBuffer();
                 // 获取common.js
                 String text = Utils.readFromResource(filePath);
                 // 正则替换banner, 除去底部的广告信息
+//                text = text.replaceAll("<footer class=\"footer\">.*?</footer>", "");
+                text = text.replaceAll("<footer class=\"footer\">", "");
                 text = text.replaceAll("<a.*?banner\"></a><br/>", "");
                 text = text.replaceAll("powered.*?shrek.wang</a>", "");
+                text = text.replaceAll("</footer>", "");
                 response.getWriter().write(text);
             }
 
@@ -69,6 +73,14 @@ public class RemoveDruidAdConfig {
         registrationBean.setFilter(filter);
         registrationBean.addUrlPatterns(commonJsPattern);
         return registrationBean;
+    }
+
+    /**
+     * discard long time none received connection
+     */
+    @PostConstruct
+    public void setProperties() {
+        System.setProperty("druid.mysql.usePingMethod", "false");
     }
 
 }
